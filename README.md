@@ -91,8 +91,8 @@ youtube_gesture_control/
 3. **Instale as dependências**
     ```bash
          pip install -r requirements.txt
-4.**Execute o programa**
-  ```bash
+4. **Execute o programa**
+    ```bash
          python main.py
 
          
