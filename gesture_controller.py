@@ -13,11 +13,9 @@ class GestureController:
         """
         current_time = time.time()
         
-        # Verifica cooldown
         if current_time - self.last_command_time < self.cooldown_time:
             return
         
-        # Mapeamento gesto -> comando
         gesture_map = {
             "FIST": self.youtube.play_pause,
             "SWIPE_RIGHT": self.youtube.forward,
@@ -29,13 +27,11 @@ class GestureController:
             "PEACE": self.youtube.mute,
         }
         
-        # Verifica swipe (movimento) separadamente
         if gesture not in ["SWIPE_RIGHT", "SWIPE_LEFT"] and landmarks and prev_landmarks:
             swipe = self.detect_swipe(landmarks, prev_landmarks)
             if swipe:
                 gesture = swipe
         
-        # Executa o comando se o gesto for válido
         if gesture in gesture_map:
             gesture_map[gesture]()
             self.last_command_time = current_time
