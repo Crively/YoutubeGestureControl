@@ -94,5 +94,14 @@ youtube_gesture_control/
 4. **Execute o programa**
     ```bash
          python main.py
+### Como Utilizar
+1. Abra o YouTube no seu navegador e inicie um vídeo
 
+2. Execute python main.py
+
+3. Certifique-se de que a janela do navegador está em foco (clique nela)
+
+4. Faça os gestos na frente da webcam
+
+5. Pressione q para sair do programa
          
