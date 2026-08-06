@@ -28,7 +28,6 @@ class HandTracker:
                         hand_landmarks, 
                         self.mp_hands.HAND_CONNECTIONS
                     )
-                # Armazena os landmarks da primeira mão detectada
                 self.landmarks = hand_landmarks.landmark
                 self.handedness = self.results.multi_handedness[0].classification[0].label
         else:
@@ -39,7 +38,6 @@ class HandTracker:
     def get_landmarks(self):
         """Retorna os 21 pontos da mão em coordenadas normalizadas (0-1)"""
         if self.landmarks:
-            # Converte para lista de tuplas (x, y, z)
             return [(lm.x, lm.y, lm.z) for lm in self.landmarks]
         return None
 
