@@ -1,6 +1,5 @@
 class GestureDetector:
     def __init__(self):
-    
         self.THUMB_TIP = 4
         self.INDEX_TIP = 8
         self.MIDDLE_TIP = 12
@@ -44,50 +43,27 @@ class GestureDetector:
         fingers_up.append(middle_tip[1] < middle_pip[1])
         fingers_up.append(ring_tip[1] < ring_pip[1])
         fingers_up.append(pinky_tip[1] < pinky_pip[1])
+
         count = sum(fingers_up)
 
         thumb_points_up = thumb_tip[1] < wrist[1] - 0.1
         thumb_points_down = thumb_tip[1] > wrist[1] + 0.1
 
         if count == 0:
-            return "FIST"  #  Punho fechado
-        elif count == 1 and fingers_up[1] and not fingers_up[0]:
-            return "POINT_UP"  #  Apontando para cima
+            return "FIST"  # Punho fechado
         elif count == 2 and fingers_up[1] and fingers_up[2]:
-            return "PEACE"  #  Paz (V)
+            return "PEACE"  # Paz (V)
         elif count == 5:
-            return "OPEN_HAND"  #  Mão aberta
+            return "OPEN_HAND"  # Mão aberta
         elif count == 2 and fingers_up[0] and fingers_up[1]:
-            # Pinça (polegar + indicador)
-            return "PINCH"
-        elif count == 4 and not fingers_up[4]:
-            # 4 dedos (menos mindinho) - OK
-            return "FOUR"
+            return "PINCH"  # Pinça (polegar + indicador)
         elif count == 1 and fingers_up[0]:
-    
+            # Só o polegar levantado: decide a direção pela posição vertical real
             if thumb_points_up:
-                return "THUMB_UP"  #  Polegar para cima
+                return "THUMB_UP"  # Polegar para cima
             elif thumb_points_down:
-                return "THUMB_DOWN"  #  Polegar para baixo
+                return "THUMB_DOWN"  # Polegar para baixo
             else:
                 return "UNKNOWN_THUMB"
         else:
             return f"UNKNOWN_{count}"
-
-    def detect_swipe(self, landmarks, prev_landmarks, threshold=0.1):
-        """
-        Detecta movimento de deslizar (swipe) baseado no centro da mão
-        """
-        if landmarks is None or prev_landmarks is None:
-            return None
-
-        current_x = landmarks[0][0]
-        prev_x = prev_landmarks[0][0]
-
-        if current_x - prev_x > threshold:
-            return "SWIPE_RIGHT"
-        
-        elif prev_x - current_x > threshold:
-            return "SWIPE_LEFT"
-
-        return None
