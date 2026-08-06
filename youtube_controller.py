@@ -4,13 +4,12 @@ import time
 class YouTubeController:
     def __init__(self, debug=True):
         self.debug = debug
-        pyautogui.FAILSAFE = True  # Para emergências (mova o mouse para o canto)
+        pyautogui.FAILSAFE = True
         
     def play_pause(self):
         """Alterna entre play e pause (tecla K)"""
         if self.debug: print("▶️ Play/Pause")
         pyautogui.press('k')
-        # Alternativa: pyautogui.press('space')
         
     def forward(self, seconds=5):
         """Avança 5 segundos (tecla L)"""
