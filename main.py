@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-import time 
+import time
+
 from hand_tracker import HandTracker
 from gesture_detector import GestureDetector
 from gesture_controller import GestureController
@@ -8,11 +9,13 @@ from youtube_controller import YouTubeController
 
 
 def main():
+    
     hand_tracker = HandTracker()
     gesture_detector = GestureDetector()
     youtube_controller = YouTubeController()
     gesture_controller = GestureController(youtube_controller, cooldown_time=1.5)
 
+    
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -37,19 +40,18 @@ def main():
             break
 
         frame = cv2.flip(frame, 1)
-        frame_height, frame_width, _ = frame.shape
 
         frame = hand_tracker.find_hands(frame, draw=True)
         landmarks = hand_tracker.get_landmarks()
 
         if landmarks:
             gesture = gesture_detector.detect_gesture(landmarks)
-
+            
             cv2.putText(frame, f"Gesto: {gesture}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             gesture_controller.process_gesture(gesture, landmarks, prev_landmarks)
-            
+
             prev_landmarks = landmarks
         else:
             prev_landmarks = None
