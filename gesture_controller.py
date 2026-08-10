@@ -9,7 +9,7 @@ class GestureController:
             "v": "mute"
         }
         
-        self.cooldown_time = 1.0  
+        self.cooldown_time = 3.0  
         self.last_command_time = 0
         self.last_gesture = None
 
