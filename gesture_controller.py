@@ -1,52 +1,47 @@
-import time
-
 class GestureController:
-    def __init__(self, youtube_controller, cooldown_time=1.5):
-        self.youtube = youtube_controller
-        self.cooldown_time = cooldown_time
-        self.last_command_time = 0
-        self.last_gesture = None
-        
-    def process_gesture(self, gesture, landmarks=None, prev_landmarks=None):
-        """
-        Processa o gesto e executa o comando correspondente com cooldown
-        """
-        current_time = time.time()
-        
-        if current_time - self.last_command_time < self.cooldown_time:
-            return
-        
-        gesture_map = {
-            "FIST": self.youtube.play_pause,
-            "SWIPE_RIGHT": self.youtube.forward,
-            "SWIPE_LEFT": self.youtube.rewind,
-            "THUMB_UP": self.youtube.volume_up,
-            "THUMB_DOWN": self.youtube.volume_down,
-            "OPEN_HAND": self.youtube.fullscreen,
-            "PINCH": self.youtube.toggle_captions,
-            "PEACE": self.youtube.mute,
+    def __init__(self):
+        self.gesture_map = {
+            "fist": "play_pause",
+            "open_hand": "fullscreen",
+            "thumbs_up": "volume_up",
+            "thumbs_down": "volume_down",
+            "pinch": "toggle_captions",
+            "v": "mute"
         }
         
-        if gesture not in ["SWIPE_RIGHT", "SWIPE_LEFT"] and landmarks and prev_landmarks:
-            swipe = self.detect_swipe(landmarks, prev_landmarks)
-            if swipe:
-                gesture = swipe
-        
-        if gesture in gesture_map:
-            gesture_map[gesture]()
-            self.last_command_time = current_time
-            self.last_gesture = gesture
-            
-    def detect_swipe(self, landmarks, prev_landmarks, threshold=0.08):
-        """Detecta swipe baseado no movimento do centro da mão"""
-        if landmarks is None or prev_landmarks is None:
+        self.cooldown_time = 1.0  
+        self.last_command_time = 0
+        self.last_gesture = None
+
+    def process_gesture(self, gesture_name, current_time):
+        """
+        Processa o gesto detectado e retorna o comando correspondente
+        """
+        if not gesture_name:
             return None
-            
-        current_x = landmarks[0][0]
-        prev_x = prev_landmarks[0][0]
+
+        if current_time - self.last_command_time < self.cooldown_time:
+            return None
         
-        if current_x - prev_x > threshold:
-            return "SWIPE_RIGHT"
-        elif prev_x - current_x > threshold:
-            return "SWIPE_LEFT"
+        if gesture_name in self.gesture_map:
+            
+            if gesture_name != self.last_gesture:
+                self.last_gesture = gesture_name
+                self.last_command_time = current_time
+                return self.gesture_map[gesture_name]
+        
         return None
+
+    def get_gesture_name(self, gesture_key):
+        """
+        Retorna o nome legível do gesto
+        """
+        gesture_names = {
+            "fist": "✊ Punho fechado",
+            "open_hand": "🖐️ Mão aberta",
+            "thumbs_up": "👍 Polegar para cima",
+            "thumbs_down": "👎 Polegar para baixo",
+            "pinch": "🤏 Pinça",
+            "v": "✌️ Paz (V)"
+        }
+        return gesture_names.get(gesture_key, gesture_key)
