@@ -13,7 +13,7 @@
 
 **YouTube Gesture Control** é um sistema de visão computacional que permite controlar a reprodução de vídeos do YouTube através de gestos manuais detectados pela webcam. O projeto utiliza **OpenCV** para captura de vídeo, **MediaPipe** para rastreamento preciso das mãos e **PyAutoGUI** para enviar comandos de teclado ao navegador.
 
-O sistema foi otimizado para oferecer **detecção precisa** e **experiência fluida** com um cooldown de 3 segundos entre comandos, evitando execuções acidentais.
+O sistema foi otimizado para oferecer **detecção precisa** e **experiência fluida** com um cooldown de 2 segundos entre comandos, evitando execuções acidentais.
 
 ---
 
@@ -34,15 +34,17 @@ O sistema foi otimizado para oferecer **detecção precisa** e **experiência fl
 - **Indicador de cooldown** mostrando o tempo restante para próximo comando
 - **Status do sistema** ("Pronto para comando" / "Aguarde cooldown")
 - **Desenho dos 21 pontos da mão** com conexões
-- **Contador de dedos esticados** para diagnóstico
+- **Status de detecção** (mão detectada/não detectada)
+
 
 ### ⚡ Melhorias de Estabilidade
 
-- **Cooldown de 3 segundos** entre comandos para evitar execuções acidentais
-- **Suavização de detecção** com histórico de frames (filtro de consistência)
+- **Cooldown de 2 segundos** entre comandos para evitar execuções acidentais
+- **Suavização de detecção** com filtro de consistência
 - **Thresholds ajustados** para melhor precisão na detecção de gestos
 - **Verificação de ângulo** para thumbs up/down (mais preciso)
-- **Prevenção de comandos duplicados** consecutivos
+- **Prevenção de spam** com verificação de comandos duplicados
+- **Tratamento de erros** robusto para webcam e processamento
 
 ---
 
@@ -110,7 +112,7 @@ YoutubeGestureControl/
 
 4. **Faça os gestos na frente da webcam**
 
-5. **Aguarde o indicador de cooldown (3 segundos) entre comandos**
+5. **Aguarde o indicador de cooldown (2 segundos) entre comandos**
 
 6. **Pressione q para sair do programa**
 
