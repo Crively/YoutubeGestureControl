@@ -14,9 +14,11 @@ class HandTracker:
         self.mp_draw = mp.solutions.drawing_utils
         self.landmarks = None
         self.handedness = None
+        self.results = None
 
     def find_hands(self, frame, draw=True):
         """Detecta as mãos no frame e retorna os landmarks"""
+     
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         self.results = self.hands.process(rgb_frame)
         
@@ -28,6 +30,7 @@ class HandTracker:
                         hand_landmarks, 
                         self.mp_hands.HAND_CONNECTIONS
                     )
+               
                 self.landmarks = hand_landmarks.landmark
                 self.handedness = self.results.multi_handedness[0].classification[0].label
         else:
@@ -36,7 +39,12 @@ class HandTracker:
         return frame
 
     def get_landmarks(self):
-        """Retorna os 21 pontos da mão em coordenadas normalizadas (0-1)"""
+        """Retorna os landmarks originais do MediaPipe (com atributos .x, .y, .z)"""
+        
+        return self.landmarks
+
+    def get_landmarks_as_tuple(self):
+        """Retorna os 21 pontos da mão em coordenadas normalizadas (0-1) como tuplas"""
         if self.landmarks:
             return [(lm.x, lm.y, lm.z) for lm in self.landmarks]
         return None
@@ -47,3 +55,7 @@ class HandTracker:
         if self.landmarks:
             return [(int(lm.x * w), int(lm.y * h)) for lm in self.landmarks]
         return None
+
+    def is_hand_detected(self):
+        """Verifica se uma mão foi detectada"""
+        return self.landmarks is not None
