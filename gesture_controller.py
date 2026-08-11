@@ -9,10 +9,10 @@ class GestureController:
             "v": "mute"
         }
         
-        self.cooldown_time = 3.0  
+        self.cooldown_time = 2.0
         self.last_command_time = 0
         self.last_gesture = None
-
+        self.last_command = None
     def process_gesture(self, gesture_name, current_time):
         """
         Processa o gesto detectado e retorna o comando correspondente
@@ -22,13 +22,17 @@ class GestureController:
 
         if current_time - self.last_command_time < self.cooldown_time:
             return None
-        
-        if gesture_name in self.gesture_map:
             
-            if gesture_name != self.last_gesture:
-                self.last_gesture = gesture_name
-                self.last_command_time = current_time
-                return self.gesture_map[gesture_name]
+        if gesture_name in self.gesture_map:
+            command = self.gesture_map[gesture_name]
+            
+            if command == self.last_command:
+                pass
+            
+            self.last_gesture = gesture_name
+            self.last_command = command
+            self.last_command_time = current_time
+            return command
         
         return None
 
@@ -45,3 +49,12 @@ class GestureController:
             "v": "✌️ Paz (V)"
         }
         return gesture_names.get(gesture_key, gesture_key)
+
+    def get_cooldown_remaining(self, current_time):
+        """Retorna o tempo restante de cooldown"""
+        remaining = self.cooldown_time - (current_time - self.last_command_time)
+        return max(0, remaining)
+
+    def is_ready(self, current_time):
+        """Verifica se o sistema está pronto para receber um comando"""
+        return current_time - self.last_command_time >= self.cooldown_time
