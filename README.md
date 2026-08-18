@@ -2,7 +2,6 @@
 
 **Controle o YouTube usando apenas gestos das mãos através da sua webcam! 🖐️**
 
-[![Licença MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.10.0+-red.svg)](https://opencv.org/)
 [![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.21+-yellow.svg)](https://mediapipe.dev/)
