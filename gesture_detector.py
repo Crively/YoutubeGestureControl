@@ -1,203 +1,180 @@
 import cv2
-import mediapipe as mp
 import numpy as np
-import math
+import mediapipe as mp
 
 class GestureDetector:
     def __init__(self):
         self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands(
+            static_image_mode=False,
+            max_num_hands=1,
+            min_detection_confidence=0.7,
+            min_tracking_confidence=0.5
+        )
         self.mp_drawing = mp.solutions.drawing_utils
         
-      
-        self.FIST_THRESHOLD = 0.15 
-        self.THUMB_UP_ANGLE_THRESHOLD = 45 
-        self.THUMB_DOWN_ANGLE_THRESHOLD = 135  
-        self.PINCH_THRESHOLD = 0.12 
-
+        self.PINCH_THRESHOLD = 0.08
+        self.THUMB_ANGLE_THRESHOLD = 0.02
+        self.FIST_THRESHOLD = 0.15
+        
     def detect_gesture(self, landmarks):
-        """
-        Detecta o gesto baseado nos landmarks da mão
-        Retorna: string com o nome do gesto ou None
-        """
-        if not landmarks:
-            return None
+        """Detecta e classifica o gesto baseado nos landmarks"""
+        if landmarks is None:
+            return "none"
             
-        if self._is_pinch(landmarks):
-            return "pinch"
-        
-        if self._is_v_gesture(landmarks):
-            return "v"
-        
-        if self._is_thumb_up(landmarks):
-            return "thumbs_up"
-        if self._is_thumb_down(landmarks):
-            return "thumbs_down"
-        
-        fingers_extended = self._count_fingers_extended(landmarks)
-        
-        if fingers_extended == 0:
+    
+        if self._is_fist(landmarks):
             return "fist"
-        
-        if fingers_extended >= 4:
+        elif self._is_open_hand(landmarks):
             return "open_hand"
+        elif self._is_pinch(landmarks):
+            return "pinch"
+        elif self._is_peace(landmarks):
+            return "peace"
+        elif self._is_thumb_up(landmarks):
+            return "thumb_up"
+        elif self._is_thumb_down(landmarks):
+            return "thumb_down"
+        else:
+            return "none"
+    
+    def _is_fist(self, landmarks):
+        """Detecta punho fechado - todos os dedos dobrados"""
+      
+        tips = [4, 8, 12, 16, 20]
+        bases = [2, 5, 9, 13, 17]
         
-        return None
-
-    def _count_fingers_extended(self, landmarks):
-        """
-        Conta quantos dedos estão esticados (AGORA incluindo o polegar)
-        """
-        count = 0
+        folded_count = 0
+        for tip, base in zip(tips, bases):
+            
+            dist = np.sqrt(
+                (landmarks[tip].x - landmarks[base].x)**2 +
+                (landmarks[tip].y - landmarks[base].y)**2
+            )
+            if dist < self.FIST_THRESHOLD:
+                folded_count += 1
         
-        if landmarks[4].x > landmarks[3].x: 
-            count += 1
+        return folded_count >= 4
+    
+    def _is_open_hand(self, landmarks):
+        """Detecta mão aberta - todos os dedos estendidos"""
+        tips = [8, 12, 16, 20] 
+        bases = [5, 9, 13, 17]
         
-        finger_tips = [8, 12, 16, 20] 
-        finger_pips = [6, 10, 14, 18] 
+        extended_count = 0
+        for tip, base in zip(tips, bases):
+            dist = np.sqrt(
+                (landmarks[tip].x - landmarks[base].x)**2 +
+                (landmarks[tip].y - landmarks[base].y)**2
+            )
+            if dist > self.FIST_THRESHOLD * 1.5:
+                extended_count += 1
         
-        for tip, pip in zip(finger_tips, finger_pips):
-            if landmarks[tip].y < landmarks[pip].y:
-                count += 1
-        
-        return count
-
-    def _is_thumb_up(self, landmarks):
-        """
-        Verifica se o polegar está apontando para cima
-        CORREÇÃO: Usa ângulo mais robusto
-        """
-        thumb_tip = landmarks[4]
-        thumb_ip = landmarks[3]
-        
-        dx = thumb_tip.x - thumb_ip.x
-        dy = thumb_tip.y - thumb_ip.y
-        
-        angle = math.degrees(math.atan2(dx, -dy))
-        
-        is_up = abs(angle) < self.THUMB_UP_ANGLE_THRESHOLD
-        
-        thumb_extended = self._is_thumb_extended(landmarks)
-        
-        return is_up and thumb_extended
-
-    def _is_thumb_down(self, landmarks):
-        """
-        Verifica se o polegar está apontando para baixo
-        """
-        thumb_tip = landmarks[4]
-        thumb_ip = landmarks[3]
-        
-        dx = thumb_tip.x - thumb_ip.x
-        dy = thumb_tip.y - thumb_ip.y
-        
-        angle = math.degrees(math.atan2(dx, -dy))
-        
-        is_down = abs(angle) > self.THUMB_DOWN_ANGLE_THRESHOLD
-        
-        thumb_extended = self._is_thumb_extended(landmarks)
-        
-        return is_down and thumb_extended
-
-    def _is_thumb_extended(self, landmarks):
-        """
-        Verifica se o polegar está esticado (separado da mão)
-        """
-        thumb_tip = landmarks[4]
-        thumb_mcp = landmarks[2] 
-        
-        distance = math.sqrt(
-            (thumb_tip.x - thumb_mcp.x)**2 + 
-            (thumb_tip.y - thumb_mcp.y)**2
-        )
-        return distance > 0.08  
-
+        return extended_count >= 3 
+    
     def _is_pinch(self, landmarks):
-        """
-        Verifica se o gesto é de pinça (polegar e indicador se tocando)
-        CORREÇÃO: Threshold ajustado e verificação adicional
-        """
+        """Detecta gesto de pinça - polegar e indicador juntos"""
         thumb_tip = landmarks[4]
         index_tip = landmarks[8]
         
-        distance = math.sqrt(
-            (thumb_tip.x - index_tip.x)**2 + 
+        dist = np.sqrt(
+            (thumb_tip.x - index_tip.x)**2 +
             (thumb_tip.y - index_tip.y)**2
         )
         
-        if distance < self.PINCH_THRESHOLD:
-
-            middle_tip = landmarks[12]
-            middle_pip = landmarks[10]
-            ring_tip = landmarks[16]
-            ring_pip = landmarks[14]
-            pinky_tip = landmarks[20]
-            pinky_pip = landmarks[18]
-            
-            middle_extended = middle_tip.y < middle_pip.y
-            ring_extended = ring_tip.y < ring_pip.y
-            pinky_extended = pinky_tip.y < pinky_pip.y
-            
-
-            if not (middle_extended or ring_extended or pinky_extended):
-                return True
-        
-        return False
-
-    def _is_v_gesture(self, landmarks):
-        """
-        Verifica se o gesto é o V da paz (indicador e médio esticados)
-        """
+        return dist < self.PINCH_THRESHOLD
+    
+    def _is_peace(self, landmarks):
+        """Detecta gesto de paz (V) - indicador e médio estendidos"""
         index_tip = landmarks[8]
-        index_pip = landmarks[6]
+        index_base = landmarks[5]
         middle_tip = landmarks[12]
-        middle_pip = landmarks[10]
+        middle_base = landmarks[9]
         ring_tip = landmarks[16]
-        ring_pip = landmarks[14]
+        ring_base = landmarks[13]
         pinky_tip = landmarks[20]
-        pinky_pip = landmarks[18]
-
-
-        index_extended = index_tip.y < index_pip.y
-        middle_extended = middle_tip.y < middle_pip.y
+        pinky_base = landmarks[17]
         
-        ring_folded = ring_tip.y > ring_pip.y
-        pinky_folded = pinky_tip.y > pinky_pip.y
+        index_extended = np.sqrt(
+            (index_tip.x - index_base.x)**2 +
+            (index_tip.y - index_base.y)**2
+        ) > self.FIST_THRESHOLD * 1.5
         
-        thumb_tip = landmarks[4]
-        thumb_ip = landmarks[3]
-        thumb_folded = thumb_tip.y > thumb_ip.y  # Simplificado
+        middle_extended = np.sqrt(
+            (middle_tip.x - middle_base.x)**2 +
+            (middle_tip.y - middle_base.y)**2
+        ) > self.FIST_THRESHOLD * 1.5
+        
+        ring_folded = np.sqrt(
+            (ring_tip.x - ring_base.x)**2 +
+            (ring_tip.y - ring_base.y)**2
+        ) < self.FIST_THRESHOLD
+        
+        pinky_folded = np.sqrt(
+            (pinky_tip.x - pinky_base.x)**2 +
+            (pinky_tip.y - pinky_base.y)**2
+        ) < self.FIST_THRESHOLD
         
         return index_extended and middle_extended and ring_folded and pinky_folded
-
-    def draw_landmarks(self, frame, landmarks, gesture_name):
-        """
-        Desenha os landmarks e o nome do gesto na tela
-        """
-        if landmarks:
-          
-            landmark_list = mp.solutions.framework_public.pb2.NormalizedLandmarkList()
-            for lm in landmarks:
-                landmark = landmark_list.landmark.add()
-                landmark.x = lm.x
-                landmark.y = lm.y
-                landmark.z = lm.z if hasattr(lm, 'z') else 0
-            
-            self.mp_drawing.draw_landmarks(
-                frame, 
-                landmark_list, 
-                self.mp_hands.HAND_CONNECTIONS,
-                self.mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-                self.mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2)
+    
+    def _is_thumb_up(self, landmarks):
+        """Detecta polegar para cima usando ângulo"""
+        thumb_tip = landmarks[4]
+        thumb_ip = landmarks[3]
+        thumb_mcp = landmarks[2]
+        
+        vec_tip = np.array([
+            thumb_tip.x - thumb_mcp.x,
+            thumb_tip.y - thumb_mcp.y
+        ])
+        
+        vec_ip = np.array([
+            thumb_ip.x - thumb_mcp.x,
+            thumb_ip.y - thumb_mcp.y
+        ])
+        
+        cross = vec_tip[0] * vec_ip[1] - vec_tip[1] * vec_ip[0]
+        
+        tips = [8, 12, 16, 20]
+        bases = [5, 9, 13, 17]
+        folded_count = 0
+        for tip, base in zip(tips, bases):
+            dist = np.sqrt(
+                (landmarks[tip].x - landmarks[base].x)**2 +
+                (landmarks[tip].y - landmarks[base].y)**2
             )
+            if dist < self.FIST_THRESHOLD:
+                folded_count += 1
         
-        if gesture_name:
-            h, w, _ = frame.shape
-            
-            overlay = frame.copy()
-            cv2.rectangle(overlay, (5, 5), (350, 60), (0, 0, 0), -1)
-            cv2.addWeighted(overlay, 0.5, frame, 0.5, 0, frame)
-            
-            cv2.putText(frame, f"Gesto: {gesture_name.upper()}", (10, 45), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        return cross < -self.THUMB_ANGLE_THRESHOLD and folded_count >= 3
+    
+    def _is_thumb_down(self, landmarks):
+        """Detecta polegar para baixo usando ângulo"""
+        thumb_tip = landmarks[4]
+        thumb_ip = landmarks[3]
+        thumb_mcp = landmarks[2]
         
-        return frame
+        vec_tip = np.array([
+            thumb_tip.x - thumb_mcp.x,
+            thumb_tip.y - thumb_mcp.y
+        ])
+        
+        vec_ip = np.array([
+            thumb_ip.x - thumb_mcp.x,
+            thumb_ip.y - thumb_mcp.y
+        ])
+        
+        cross = vec_tip[0] * vec_ip[1] - vec_tip[1] * vec_ip[0]
+        
+        tips = [8, 12, 16, 20]
+        bases = [5, 9, 13, 17]
+        folded_count = 0
+        for tip, base in zip(tips, bases):
+            dist = np.sqrt(
+                (landmarks[tip].x - landmarks[base].x)**2 +
+                (landmarks[tip].y - landmarks[base].y)**2
+            )
+            if dist < self.FIST_THRESHOLD:
+                folded_count += 1
+        
+        return cross > self.THUMB_ANGLE_THRESHOLD and folded_count >= 3
